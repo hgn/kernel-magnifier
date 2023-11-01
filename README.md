@@ -1,3 +1,9 @@
+# Usage
+
+```
+$ ftrace-callgrapher.py visualize --filter-filepath net,kernel
+```
+
 
 # Installation
 
@@ -9,9 +15,9 @@ use dwarfdump, so just install the packages
 
 ```
 # Mandatory
-apt-get install python3-pygraphviz
-# Optional
-apt-get install dwarfdump 
-apt-get install linux-image-amd64-dbg
+$ apt-get install python3-pygraphviz
+# Optional, for symbol filtering required
+$ apt-get install dwarfdump 
+$ apt-get install linux-image-amd64-dbg
 ```
 
