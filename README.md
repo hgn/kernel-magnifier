@@ -1,7 +1,26 @@
 # Usage
 
+
+## Recording Data
+
+Without arguments, ftrace-callgrapher will by default capture trace data on all
+CPUs for 10 seconds:
+
 ```
-$ ftrace-callgrapher.py visualize --filter-filepath net,kernel
+$ sudo ftrace-callgrapher.py record
+```
+
+This will generate huge amount of data, even for the later post processing. If
+data can be filtered in the recoring phase 
+
+```
+$ sudo ftrace-callgrapher.py record --cpu 1 --record-time 30
+```
+
+## Visualizing Recorded Data
+
+```
+$ ftrace-callgrapher.py visualize --filter-filepath net
 ```
 
 

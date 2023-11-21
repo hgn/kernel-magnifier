@@ -10,6 +10,8 @@ from dataclasses import dataclass
 import types
 import subprocess
 import matplotlib.pyplot as plt
+import matplotlib.ticker as ticker
+from matplotlib.ticker import ScalarFormatter
 import numpy as np
 
 
@@ -140,17 +142,71 @@ class Network(object):
 
 GDB = Network()
 
+def get_file_size(file_path):
+    try:
+        return os.path.getsize(file_path)
+    except FileNotFoundError:
+        return -1
 
-def graph_function_call_frequency():
+def convert_size(size_in_bytes):
+    if size_in_bytes < 1024:
+        return f"{size_in_bytes} B"
+    elif size_in_bytes < 1024 * 1024:
+        return f"{size_in_bytes / 1024:.2f} KiB"
+    elif size_in_bytes < 1024 * 1024 * 1024:
+        return f"{size_in_bytes / (1024 * 1024):.2f} MiB"
+    else:
+        return f"{size_in_bytes / (1024 * 1024 * 1024):.2f} GiB"
+
+def graph_function_call_frequency2(args):
     data = []
-    for function, calls in GDB.node_calls.items():
-        data.append([function, calls])
+    for node in GDB.nodes(args, filter_calls=args.filter_execution_no):
+        cumulative_called = GDB.executed_no(node.name)
+        data.append([node.name, cumulative_called])
     sorted_data = sorted(data, key=lambda x: x[1], reverse=True)
     names, occurrences = zip(*sorted_data)
-    limit = 25
+    limit = 35
+    names = names[:limit]
+    values = occurrences[:limit]
+
+    plt.rcParams.update({'font.size': 4})
+    fig, ax = plt.subplots()
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
+    ax.spines["left"].set_visible(False)
+    ax.xaxis.grid(which='major', linestyle='-', linewidth='0.5', color='black')
+    ax.xaxis.grid(which='minor', linestyle=':', linewidth='0.5', color='black')
+    ax.set_axisbelow(True)
+    ax.ticklabel_format(style='plain')
+
+    num_bars = len(names)
+    colors = plt.cm.plasma(np.linspace(0.1, 0.9, num_bars))
+    ax.barh(names, values, color=colors)
+    ax.invert_yaxis()
+    ax.set_xscale('log')
+
+    ax.get_xaxis().get_major_formatter().labelOnlyBase = False
+    ax.xaxis.set_minor_formatter(ticker.FormatStrFormatter('%d'))
+
+    ax.set_ylabel("Function Names")
+    ax.set_xlabel("Calls")
+
+    plt.tight_layout()
+    filename = "function-calls.png"
+    print(f"{filename} generated")
+    plt.savefig("function-calls.png", dpi=600, bbox_inches="tight")
+    plt.close()
+
+def graph_function_call_frequency(args):
+    data = []
+    for node in GDB.nodes(args, filter_calls=args.filter_execution_no):
+        cumulative_called = GDB.executed_no(node.name)
+        data.append([node.name, cumulative_called])
+    sorted_data = sorted(data, key=lambda x: x[1], reverse=True)
+    names, occurrences = zip(*sorted_data)
+    limit = 30
     names = names[:limit]
     occurrences = occurrences[:limit]
-
 
     fig, ax = plt.subplots(figsize=(10, 6))
     ax.spines["top"].set_visible(False)
@@ -160,20 +216,26 @@ def graph_function_call_frequency():
     ax.set_axisbelow(True)
     ax.ticklabel_format(style='plain')
 
-    # Generate a custom color map with a light gradient
     num_bars = len(names)
-    colors = plt.cm.viridis(np.linspace(0.2, 0.8, num_bars))
+    colors = plt.cm.viridis(np.linspace(0.1, 0.9, num_bars))
 
     ax.bar(names, occurrences, color=colors)
     ax.set_yscale('log')
-    #ax.ticklabel_format(style='plain')
+
+    formatter = ScalarFormatter()
+    formatter.set_scientific(False)
+    ax.yaxis.set_major_formatter(formatter)
+    ax.get_yaxis().get_major_formatter().labelOnlyBase = False
+    ax.yaxis.set_minor_formatter(ticker.FormatStrFormatter('%d'))
 
     ax.set_xlabel("Function Names")
     ax.set_ylabel("Calls")
 
-    ax.set_xticks(ax.get_xticks(), ax.get_xticklabels(), rotation=90, ha='right')
+    ax.set_xticks(ax.get_xticks(), ax.get_xticklabels(), ha='right', rotation=45, rotation_mode='anchor')
 
     plt.tight_layout()
+    filename = "function-calls.png"
+    print(f"{filename} generated")
     plt.savefig("function-calls.png", dpi=300, bbox_inches="tight")
     plt.close()
 
@@ -213,7 +275,7 @@ def tracing_enable(args):
 
     if args.cpumask:
         with open(os.path.join(FTRACE_DIR, "tracing_cpumask"), "w") as fd:
-            print(args.cpumask)
+            print(f"Limit recording to CPU mask {args.cpumask}")
             fd.write(args.cpumask)
 
     with open(os.path.join(FTRACE_DIR, "tracing_on"), "w") as fd:
@@ -266,6 +328,8 @@ def record_data(env, record_time):
             print(f"Error: {e}")
     print(f"wrote data to {RECORD_OUT_FILE}")
     make_file_world_readable(RECORD_OUT_FILE)
+    print(f"Record filesize: {convert_size(get_file_size(RECORD_OUT_FILE))}")
+
 
 
 def record(args):
@@ -273,6 +337,7 @@ def record(args):
     env = tracing_enable(args)
     record_data(env, args.record_time)
     tracing_disable()
+    return 0
 
 
 def parse_lost_event_lines(line):
@@ -413,7 +478,7 @@ def load_symbol_filepath_map(args):
 
 
 def visualize(args):
-    print("Visualizion mode - now generating visualization...")
+    print("Visualization mode - now generating visualization...")
     map_db = load_symbol_filepath_map(args)
     parse_data(map_db)
     percent_lost = (no_missed_events / (no_missed_events + no_events)) * 100
@@ -421,8 +486,9 @@ def visualize(args):
     print(
         f"{no_missed_events} events missed during capturing process ({percent_lost:.2f}%)"
     )
-    graph_function_call_frequency()
+    graph_function_call_frequency(args)
     visualize_data(args)
+    return 0
 
 
 def execute_command_incremental(command):
@@ -549,13 +615,14 @@ def parse_command_line_args():
 if __name__ == "__main__":
     args = parse_command_line_args()
     if args.subcommand == "record":
-        record(args)
+        sys.exit(record(args))
     elif args.subcommand == "visualize":
         if args.filter_filepath:
             # convert into filter array
             args.filter_filepath = args.filter_filepath.split(",")
-        visualize(args)
+        sys.exit(visualize(args))
     elif args.subcommand == "generate-symbol-map":
         gen_mapping_db(args)
     else:
-        print("Please specify a subcommand (e.g., record or visualize).")
+        print("Please specify a subcommand (e.g., record, visualize or generate-symbol-map).")
+        sys.exit(1)
