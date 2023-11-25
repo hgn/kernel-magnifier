@@ -1,4 +1,11 @@
-# Usage
+<p align="center">
+  <img src="docs/kernel-magnifier-readme.png" alt="Kernel Magnifier"><br>
+</p>
+
+*A Linux Kernel Execution Flow Research Tool for Upcomming Kernel Hackers and Veterans*
+
+
+## Usage
 
 
 ## Recording Data
