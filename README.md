@@ -4,6 +4,33 @@
 
 *A Linux Kernel Execution Flow Research Tool for Upcomming Kernel Hackers and Veterans*
 
+## Background
+
+You are new to Linux kernel development and want to develop a driver,
+contribute new network stack functionality, better understand the complex
+process scheduler or just chase a kernel bug - then the Kernel Magnifier could
+provide some support.
+
+Many developers find it difficult to understand the kernel. It is not simple
+code, on the contrary: even if you have mastered programming languages such as
+C/C++, it is incredibly tedious to understand the kernel. This is due to the
+following reasons, among others
+
+- The Linux kernel has its very own runtime, which is completely different from
+  userspace. There are many execution contexts which are complex even for
+  experienced kernel developers
+- Many things are processed asynchronously! Top and bottom halves from the
+  Informatics lecture are still familiar to many. But the kernel is much more
+  complex here. There are softwirqs, workers, tasklets and other context and
+  subsystem add custom implementations - like for NAPI for the network stack -
+  on top of it. None of this makes the kernel any simpler.
+- The kernel is highly optimized, often every instruction is optimized to
+  elicit the last percent of performance
+- Many indirect functions via function pointers are included in the kernel,
+  e.g. fileops structure.
+- The kernel has grown over decades - technical debts have also accumulated
+  here, which do not make the whole thing any easier
+
 
 ## Usage
 
