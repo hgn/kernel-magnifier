@@ -16,7 +16,7 @@ import numpy as np
 
 
 FTRACE_DIR = "/sys/kernel/tracing/"
-RECORD_OUT_FILE = "ftrace-callgrapher.data"
+RECORD_OUT_FILE = "kernel-magnifier.data"
 
 
 @dataclass
@@ -234,9 +234,9 @@ def graph_function_call_frequency(args):
     ax.set_xticks(ax.get_xticks(), ax.get_xticklabels(), ha='right', rotation=45, rotation_mode='anchor')
 
     plt.tight_layout()
-    filename = "function-calls.png"
+    filename = "kernel-function-calls-sorted.png"
     print(f"{filename} generated")
-    plt.savefig("function-calls.png", dpi=300, bbox_inches="tight")
+    plt.savefig(filename, dpi=300, bbox_inches="tight")
     plt.close()
 
 
@@ -577,7 +577,7 @@ def parse_command_line_args():
     parser_visualize.add_argument(
         "--image-name",
         type=str,
-        default="ftrace-callgrapher.pdf",
+        default="kernel-magnifier.pdf",
         help="foo.pdf, foo.png, ... (default: %(default)s)",
     )
     parser_visualize.add_argument(
