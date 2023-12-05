@@ -92,7 +92,7 @@ kernel-magnifier.pdf generated
   <img src="docs/graph-full.png" alt="Full without Filtering"><br>
 </p>
 
-[Here the original PDF file (filesize 2MiB)](docs/kernel-magnifier.pdf)
+[Original PDF (filesize 2MiB)](docs/kernel-magnifier.pdf)
 
 The previous illustration show a full graph, of all callchains recording within
 10 seconds of kernel high live an rather idle system.
