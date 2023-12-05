@@ -164,17 +164,24 @@ list of called functions, sorted by highest. Here for the *net* use case
 
 # Installation
 
-ftrace-callgrapher requires optionally debug symbols to map symbols to source
-code files. For the actual mapping we use the dwarf information, to get the
-data the tool use dwarfdump, so just install the packages
+Just clone/download the repository and execute the main script:
+https://github.com/hgn/kernel-magnifier.git
 
-> NOTE: this will consume 600MiB of harddisk
+The script requires python3-pygraphviz, python3-matplotlib and python3-numpy.
+
+kernel-magnifier requires optionally debug symbols to map symbols to source
+code files. For the actual mapping we use the dwarf information, to get the
+data the tool use dwarfdump, so just install the packages.
+
+For Debian Trixie:
 
 ```
 # Mandatory
-$ apt-get install python3-pygraphviz
+$ apt-get install python3-pygraphviz python3-matplotlib python3-numpy
+
 # Optional, for symbol filtering required
 $ apt-get install dwarfdump 
 $ apt-get install linux-image-amd64-dbg
 ```
 
+> NOTE: linux-image-amd64-dbg will consume roughly 600MiB of harddisk
