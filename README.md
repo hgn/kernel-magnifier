@@ -11,8 +11,8 @@ contribute new network stack functionality, better understand the complex
 process scheduler or just chase a kernel bug - then the Kernel Magnifier could
 provide some support.
 
-Many developers new to the Linux Kernel development find it difficult to
-understand the kernel - the kernel is a beast of its own. It is not simple
+Many developers new to the Linux kernel development find it difficult to
+understand the kernel. The kernel is a beast of its own. It is not simple
 code, on the contrary: even if you have mastered programming languages such as
 C/C++ with a black belt, it is incredibly tedious to understand the kernel.
 This is due to the following reasons, among others
@@ -23,7 +23,8 @@ This is due to the following reasons, among others
 - Many things are processed asynchronously! Top and bottom halves from the
   Informatics lecture are still familiar to many. But the kernel is much more
   complex here. There are softwirqs, workers, tasklets and other context and
-  subsystem add custom implementations - like for NAPI for the network stack -
+  subsystem add custom implementations - like NAPI for the network stack
+  (imagine this as an on-demand bulk processing mechanism) -
   on top of it. None of this makes the kernel any simpler.
 - The kernel is highly optimized, often every instruction in the processing hot
   path is optimized to elicit the last percent of performance
@@ -34,12 +35,18 @@ This is due to the following reasons, among others
 
 ## Kernel Magnifier
 
-The Kernel Magnifier helps by recording the complete history of the called
-functions (ftrace) and then displaying them visually in graph form. The graph
-form provides a relatively clear representation of caller/calllee and call
-chains. It also shows which functions are called frequently and which are
-called less frequently. This information is useful for gaining an overview (hot
-path, slow path).
+The Kernel Magnifier helps by recording the complete<sup>$</sup> function call
+chain of executed kernel functions (ftrace) and then allow to visualize these
+in an graph form. The graph form provides a relatively clear representation of
+caller/calllee and call chains. It also shows which functions are called
+frequently and which are called less frequently. This information is useful for
+gaining an overview (hot path, slow path).
+
+<sup>$</sup>: Becuase of the high frequency tracing an overflow can occur and
+is not rare. Furthermore there are a lot of functions which are inlined in the
+build process of the Linux kernel, also these functions are not traceable. And
+last but not least: some functions of the ftrace subsystem are also not
+traceable for recursive reasons.
 
 ## Usage
 
@@ -84,6 +91,8 @@ kernel-magnifier.pdf generated
 <p align="center">
   <img src="docs/graph-full.png" alt="Full without Filtering"><br>
 </p>
+
+[Here the original PDF file (filesize 2MiB)](docs/kernel-magnifier.pdf)
 
 The previous illustration show a full graph, of all callchains recording within
 10 seconds of kernel high live an rather idle system.
