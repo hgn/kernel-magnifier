@@ -311,7 +311,6 @@ def record_data(env, record_time):
         try:
             with open(RECORD_OUT_FILE, "wb") as output:
                 start_time = time.time()
-
                 if record_time:
                     end_time = start_time + record_time
                 else:
@@ -326,7 +325,7 @@ def record_data(env, record_time):
             print("Recording interrupted by the user.")
         except Exception as e:
             print(f"Error: {e}")
-    print(f"wrote data to {RECORD_OUT_FILE}")
+    print(f"Wrote data to {RECORD_OUT_FILE}")
     make_file_world_readable(RECORD_OUT_FILE)
     print(f"Record filesize: {convert_size(get_file_size(RECORD_OUT_FILE))}")
 

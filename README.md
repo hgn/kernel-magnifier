@@ -2,19 +2,20 @@
   <img src="docs/kernel-magnifier-readme.png" alt="Kernel Magnifier"><br>
 </p>
 
-*A Linux Kernel Execution Flow Research Tool for Upcomming Kernel Hackers and Veterans*
+*A Linux Kernel Execution Flow Research Tool for Upcomming Kernel Hackers (and Veterans)*
 
-## Background
+## Background - Problem Statement
 
 You are new to Linux kernel development and want to develop a driver,
 contribute new network stack functionality, better understand the complex
 process scheduler or just chase a kernel bug - then the Kernel Magnifier could
 provide some support.
 
-Many developers find it difficult to understand the kernel. It is not simple
+Many developers new to the Linux Kernel development find it difficult to
+understand the kernel - the kernel is a beast of its own. It is not simple
 code, on the contrary: even if you have mastered programming languages such as
-C/C++, it is incredibly tedious to understand the kernel. This is due to the
-following reasons, among others
+C/C++ with a black belt, it is incredibly tedious to understand the kernel.
+This is due to the following reasons, among others
 
 - The Linux kernel has its very own runtime, which is completely different from
   userspace. There are many execution contexts which are complex even for
@@ -24,16 +25,23 @@ following reasons, among others
   complex here. There are softwirqs, workers, tasklets and other context and
   subsystem add custom implementations - like for NAPI for the network stack -
   on top of it. None of this makes the kernel any simpler.
-- The kernel is highly optimized, often every instruction is optimized to
-  elicit the last percent of performance
+- The kernel is highly optimized, often every instruction in the processing hot
+  path is optimized to elicit the last percent of performance
 - Many indirect functions via function pointers are included in the kernel,
   e.g. fileops structure.
 - The kernel has grown over decades - technical debts have also accumulated
   here, which do not make the whole thing any easier
 
+## Kernel Magnifier
+
+The Kernel Magnifier helps by recording the complete history of the called
+functions (ftrace) and then displaying them visually in graph form. The graph
+form provides a relatively clear representation of caller/calllee and call
+chains. It also shows which functions are called frequently and which are
+called less frequently. This information is useful for gaining an overview (hot
+path, slow path).
 
 ## Usage
-
 
 ## Recording Data
 
@@ -41,47 +49,108 @@ Without arguments, ftrace-callgrapher will by default capture trace data on all
 CPUs for 10 seconds:
 
 ```
-$ sudo ftrace-callgrapher.py record
+$ sudo kernel-magnifier.py record
+Record mode - now starting recording traces for 10.0 seconds
+Wrote data to kernel-magnifier.data
+Record filesize: 657.75 MiB
 ```
 
-This will generate huge amount of data, even for the later post processing. If
-data can be filtered in the recoring phase: perfect. Two options allow
-filtering for now: the recorded time and a filter on what CPUs recording should
-be done. The later is really important especially on 16+ multi-core systems.
+This will generate huge amount of data, even for the later post processing.
+Additionally, it burdens the CPU cores and you risk data loss. If data can be
+filtered in the recoring phase: perfect. Two options allow filtering for now:
+the recorded time and a filter on what CPUs recording should be done. The later
+is really important especially on 16+ multi-core systems.
 
 ```
-$ ftrace-callgrapher.py record --record-time 10 --cpumask 1
+$ sudo kernel-magnifier.py record --record-time 10 --cpumask 1
 Record mode - now starting recording traces for 10.0 seconds
 Limit recording to CPU mask 1
-Wrote data to ftrace-callgrapher.data
+Wrote data to kernel-magnifier.data
 Recorded filesize: 199.38 MiB
 ```
 
 ## Visualizing Recorded Data
 
-Visualization is quite ease, kust call with visualize as an argument:
+Visualization is quite ease, just call with visualize as an argument:
 
 ```
-$ ftrace-callgrapher.py visualize
+$ kernel-magnifier.py visualize
 Visualization mode - now generating visualization...
 parsing completed, found 2316184 events
 function-calls.png generated
-ftrace-callgrapher.pdf generated
+kernel-magnifier.pdf generated
 ```
 
-For symbol path filtering a mapping table `function name` to `filename` must be generated:
+<p align="center">
+  <img src="docs/graph-full.png" alt="Full without Filtering"><br>
+</p>
+
+The previous illustration show a full graph, of all callchains recording within
+10 seconds of kernel high live an rather idle system.
+
+# Symbol Filtering
+
+The kernel magnifier becomes particularly useful if you limit the visualization
+to the relevant functions.
+
+For symbol path filtering a mapping table `function name` to `filename` must be generated.
+This map file contains a pure line based mapping between kernel function name
+and source code line within the Linux kernel source tree. For this you need a
+tool named `dwarfdump` as well as debug package of the kernel, see Installation
+notes.
 
 ```
-ftrace-callgrapher.py generate-symbol-map -k /usr/lib/debug/boot/vmlinux-$(uname -r)
+$ kernel-magnifier.py generate-symbol-map -k /usr/lib/debug/boot/vmlinux-$(uname -r)
 ```
 
+Now filter just for *net*work related files, filtering for `drivers/net/`,
+`net/` and some other files named somehow `net`.
+
 ```
-$ ftrace-callgrapher.py visualize --filter-filepath net
+$ kernel-magnifier.py visualize --filter-filepath net
 Visualization mode - now generating visualization...
 parsing completed, found 2316184 events
 function-calls.png generated
-ftrace-callgrapher.pdf generated
+kernel-magnifier.pdf generated
 ```
+
+Now the graph is limited to *net*work related functions and become really
+useful. You can start zooming with you PDF viewer and looking at interesting
+aspects.
+
+<p align="center">
+  <img src="docs/graph-net.png" alt="Full without net Filtering"><br>
+</p>
+
+The following picture shows the right section enlarged. These are routines for
+incoming packet processing via `recvmsg()`
+
+<p align="center">
+  <img src="docs/graph-net-sockrec.png" alt="Full without net Filtering, zoomed"><br>
+</p>
+
+Another use case is to analyze the Linux Process/Task scheduler, this can be accomplished via
+
+```
+$ kernel-magnifier.py visualize --filter-filepath kernel/sched/fair.c,/kernel/sched/sched.h
+```
+
+The illustration show one third of all scheduler related function. What is also
+visible in the image: functions called often a more highlighted in red. The
+"reddisher", the hotter the function.
+
+<p align="center">
+  <img src="docs/graph-sched.png" alt="Full with sched Filtering"><br>
+</p>
+
+# Function Call Count
+
+Because the function call is just available, the visualizer always plot the
+list of called functions, sorted by highest. Here for the *net* use case
+
+<p align="center">
+  <img src="docs/kernel-function-calls-sorted.png" alt="kernel function calls"><br>
+</p>
 
 
 # Installation
